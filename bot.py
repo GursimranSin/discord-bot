@@ -6,12 +6,12 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 WEBHOOK = "https://discord.com/api/webhooks/1483998601213644915/7v6QTNk39lpZ13U6x7_sYcHgAqQTLAC8BkzcM7xR8vNIzAyixA6X0c3m-TfZkiyLNfCB"
-RSS = "https://www.reddit.com/r/TradingEdge/new/.rss"
+RSS = "https://www.reddit.com/r/TradingEdge/.rss"
 
 def clean_content(html_text):
     soup = BeautifulSoup(html_text, 'html.parser')
     
-    # Preserve structure: p → div, li → bullet
+    # Structure: p/li → div + bullets
     for p in soup.find_all('p'):
         p.name = 'div'
     for li in soup.find_all('li'):
@@ -20,11 +20,10 @@ def clean_content(html_text):
     
     text = soup.get_text()
     
-    # Perfect spacing + bullets
-    lines = [line.strip() for line in text.split('\n') if line.strip()]
-    content = '\n\n'.join(lines)
+    # PERFECT spacing - preserve ALL Reddit formatting
+    content = text.strip()
     
-    return content[:1900]
+    return content  # NO LIMIT - full post!
 
 def get_image(entry):
     for media in entry.get('media_content', []):
@@ -51,7 +50,7 @@ def check_posts():
             "description": content,
             "color": 0xFF4500,
             "timestamp": datetime.utcnow().isoformat() + 'Z',
-            "footer": {"text": "r/TradingEdge"}
+            "footer": {"text": "r/TradingEdge | Full Post"}
         }
         if image:
             embed["thumbnail"] = {"url": image}
