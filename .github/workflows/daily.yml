@@ -1,29 +1,28 @@
-name: TradingEdge Discord Bot
+name: Reddit to Discord
+
 on:
   schedule:
-    - cron: '30 13,19,1 * * *'  # 9:30AM, 3:30PM, 9:30PM EDT (UTC)
-  workflow_dispatch:  # Manual test button
+    - cron: "0 14 * * *"  # 9 AM EST
+    - cron: "0 2 * * *"   # 9 PM EST
+  workflow_dispatch:
 
 jobs:
-  post-updates:
+  reddit-discord:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install feedparser requests beautifulsoup4 lxml
-    
-    - name: Run TradingEdge bot
-      run: python bot.py
-    
-    - name: Notify success
-      if: success()
-      run: echo "✅ Bot ran successfully - check Discord!"
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install feedparser requests
+
+      - name: Run script
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          python reddit_to_discord.py
