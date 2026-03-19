@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 WEBHOOK = "https://discord.com/api/webhooks/1483998601213644915/7v6QTNk39lpZ13U6x7_sYcHgAqQTLAC8BkzcM7xR8vNIzAyixA6X0c3m-TfZkiyLNfCB"
-RSS = "https://www.reddit.com/r/TradingEdge/.rss"
+RSS = "https://www.reddit.com/r/TradingEdge/new/.rss"
 
 def clean_content(html_text):
     soup = BeautifulSoup(html_text, 'html.parser')
