@@ -10,22 +10,29 @@ RSS = "https://www.reddit.com/r/TradingEdge/new/.rss"
 
 def clean_content(html_text):
     soup = BeautifulSoup(html_text, 'html.parser')
+    
+    # Preserve structure: p → div, li → bullet
+    for p in soup.find_all('p'):
+        p.name = 'div'
+    for li in soup.find_all('li'):
+        li.name = 'div'
+        li.insert(0, BeautifulSoup('• ', 'html.parser'))
+    
     text = soup.get_text()
-    # Clean whitespace
-    text = re.sub(r'\n+', '\n', text)
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()[:1900]
+    
+    # Perfect spacing + bullets
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    content = '\n\n'.join(lines)
+    
+    return content[:1900]
 
 def get_image(entry):
-    # Media content
     for media in entry.get('media_content', []):
         if media.get('medium') == 'image':
             return media['url']
-    # Thumbnails
     thumbs = entry.get('media_thumbnail', [])
     if thumbs:
         return thumbs[0]['url']
-    # Reddit images
     if 'i.redd.it' in entry.link:
         return entry.link
     return None
@@ -52,12 +59,9 @@ def check_posts():
         embeds.append(embed)
     
     if embeds:
-        data = {
-            "embeds": embeds,
-            "username": "🆕 TradingEdge Bot"
-        }
+        data = {"embeds": embeds, "username": "🆕 TradingEdge Bot"}
         resp = requests.post(WEBHOOK, json=data)
-        print(f"✅ Posted {len(embeds)} | Status: {resp.status_code}")
+        print(f"✅ Posted {len(embeds)} | {resp.status_code}")
     else:
         print("No new posts")
 
