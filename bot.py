@@ -1,9 +1,8 @@
 import feedparser
 import requests
 import os
-from datetime import datetime
-from urllib.parse import urlparse
 import re
+from datetime import datetime
 from bs4 import BeautifulSoup
 
 WEBHOOK = "https://discord.com/api/webhooks/1483998601213644915/7v6QTNk39lpZ13U6x7_sYcHgAqQTLAC8BkzcM7xR8vNIzAyixA6X0c3m-TfZkiyLNfCB"
@@ -12,21 +11,21 @@ RSS = "https://www.reddit.com/r/TradingEdge/.rss"
 def clean_content(html_text):
     soup = BeautifulSoup(html_text, 'html.parser')
     text = soup.get_text()
-    lines = (line.strip() for line in text.splitlines())
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    text = ' '.join(chunk for chunk in chunks if chunk)
-    return text[:1900]
+    # Clean whitespace
+    text = re.sub(r'\n+', '\n', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()[:1900]
 
 def get_image(entry):
-    # Check media enclosures first
+    # Media content
     for media in entry.get('media_content', []):
         if media.get('medium') == 'image':
             return media['url']
-    # Check thumbnails
-    thumbnails = entry.get('media_thumbnail', [])
-    if thumbnails:
-        return thumbnails[0]['url']
-    # Reddit image post
+    # Thumbnails
+    thumbs = entry.get('media_thumbnail', [])
+    if thumbs:
+        return thumbs[0]['url']
+    # Reddit images
     if 'i.redd.it' in entry.link:
         return entry.link
     return None
@@ -44,7 +43,8 @@ def check_posts():
             "title": title,
             "description": content,
             "color": 0xFF4500,
-            "timestamp": datetime.utcnow().isoformat() + 'Z'
+            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "footer": {"text": "r/TradingEdge"}
         }
         if image:
             embed["thumbnail"] = {"url": image}
@@ -52,11 +52,12 @@ def check_posts():
         embeds.append(embed)
     
     if embeds:
-        requests.post(WEBHOOK, json={
+        data = {
             "embeds": embeds,
             "username": "🆕 TradingEdge Bot"
-        })
-        print(f"✅ Posted {len(embeds)} posts")
+        }
+        resp = requests.post(WEBHOOK, json=data)
+        print(f"✅ Posted {len(embeds)} | Status: {resp.status_code}")
     else:
         print("No new posts")
 
