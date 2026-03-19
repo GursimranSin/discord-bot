@@ -11,20 +11,26 @@ RSS = "https://www.reddit.com/r/TradingEdge/.rss"
 def clean_content(html_text):
     soup = BeautifulSoup(html_text, 'html.parser')
     
-    # Preserve structure: p → div, li → bullet
+    # Preserve structure: p → newline, li → bullet
     for p in soup.find_all('p'):
-        p.name = 'div'
+        p.insert_after(soup.new_string('\n'))
     for li in soup.find_all('li'):
-        li.name = 'div'
-        li.insert(0, BeautifulSoup('• ', 'html.parser'))
+        li.insert(0, soup.new_string('• '))
+        li.insert_after(soup.new_string('\n'))
     
     text = soup.get_text()
     
-    # Perfect spacing + bullets
+    # Clean up spacing and blank lines
     lines = [line.strip() for line in text.split('\n') if line.strip()]
     content = '\n\n'.join(lines)
     
-    return content[:1900]
+    # Truncate cleanly at last newline before limit, add ellipsis
+    if len(content) > 1900:
+        truncated = content[:1900]
+        cut = truncated.rfind('\n')
+        content = (truncated[:cut] if cut != -1 else truncated) + '\n…'
+    
+    return content
 
 def get_image(entry):
     for media in entry.get('media_content', []):
