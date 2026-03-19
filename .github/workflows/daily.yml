@@ -25,4 +25,4 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
         run: |
-          python reddit_to_discord.py
+          python bot.py
