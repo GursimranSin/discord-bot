@@ -1,47 +1,15 @@
-import feedparser
-import requests
-from datetime import datetime, time
-from zoneinfo import ZoneInfo
-import os
+for rss in rss_feeds:
+    feed = feedparser.parse(rss)
 
-WEBHOOK = os.environ.get("WEBHOOK_URL")
+    # Special handling for CanadianInvestor
+    if "CanadianInvestor" in rss:
+        if is_morning_run:
+            continue  # skip completely in morning
 
-EST = ZoneInfo("America/New_York")
+        # Only take latest post
+        entries = feed.entries[:1]
 
-# RSS feeds
-RSS_DEFAULT = [
-    "https://www.reddit.com/r/TradingEdge/.rss"
-]
-
-RSS_PM_ONLY = [
-    "https://www.reddit.com/r/CanadianInvestor/search.rss?q=daily+discussion+thread+for&restrict_sr=1&sort=new&t=day"
-]
-
-def check_posts():
-    now_est = datetime.now(EST)
-    today = now_est.date()
-
-    # Time windows
-    morning_start = datetime.combine(today, time(0, 0), EST)
-    morning_end = datetime.combine(today, time(9, 0), EST)
-
-    evening_start = datetime.combine(today, time(9, 0), EST)
-    evening_end = datetime.combine(today, time(21, 0), EST)
-
-    is_morning_run = now_est.hour < 12
-
-    # Select RSS feeds
-    if is_morning_run:
-        rss_feeds = RSS_DEFAULT
-    else:
-        rss_feeds = RSS_DEFAULT + RSS_PM_ONLY
-
-    embeds = []
-
-    for rss in rss_feeds:
-        feed = feedparser.parse(rss)
-
-        for entry in feed.entries:
+        for entry in entries:
             if not hasattr(entry, "published_parsed"):
                 continue
 
@@ -49,6 +17,26 @@ def check_posts():
             post_time_est = post_time_utc.astimezone(EST)
 
             # Only same day
+            if post_time_est.date() != today:
+                continue
+
+            embeds.append({
+                "title": entry.title[:256],
+                "url": entry.link,
+                "color": 0xFF4500,
+                "timestamp": post_time_est.isoformat(),
+                "footer": {"text": "CanadianInvestor Daily Thread"}
+            })
+
+    else:
+        # Existing TradingEdge logic (UNCHANGED)
+        for entry in feed.entries:
+            if not hasattr(entry, "published_parsed"):
+                continue
+
+            post_time_utc = datetime(*entry.published_parsed[:6], tzinfo=ZoneInfo("UTC"))
+            post_time_est = post_time_utc.astimezone(EST)
+
             if post_time_est.date() != today:
                 continue
 
@@ -64,19 +52,5 @@ def check_posts():
                 "url": entry.link,
                 "color": 0xFF4500,
                 "timestamp": post_time_est.isoformat(),
-                "footer": {"text": "Reddit Feed"}
+                "footer": {"text": "TradingEdge"}
             })
-
-    if embeds:
-        header = "📊 Morning Reddit Update (Before 9 AM EST)" if is_morning_run else "📊 Evening Reddit Update (9 AM – 9 PM EST)"
-        requests.post(WEBHOOK, json={
-            "content": header,
-            "embeds": embeds,
-            "username": "🆕 Trading Bot"
-        })
-        print(f"✅ Posted {len(embeds)} posts")
-    else:
-        print("No posts in this time window")
-
-if __name__ == "__main__":
-    check_posts()
