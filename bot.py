@@ -4,7 +4,7 @@ from datetime import datetime, time
 from zoneinfo import ZoneInfo
 import os
 
-WEBHOOK = os.environ.get("WEBHOOK_URL")
+WEBHOOK = "https://discord.com/api/webhooks/1483998601213644915/7v6QTNk39lpZ13U6x7_sYcHgAqQTLAC8BkzcM7xR8vNIzAyixA6X0c3m-TfZkiyLNfCB";
 
 EST = ZoneInfo("America/New_York")
 
