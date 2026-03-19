@@ -9,22 +9,22 @@ WEBHOOK = "https://discord.com/api/webhooks/1483998601213644915/7v6QTNk39lpZ13U6
 RSS = "https://www.reddit.com/r/TradingEdge/.rss"
 
 def clean_content(html_text):
-    if not html_text:
-        return "No content available"
-    
     soup = BeautifulSoup(html_text, 'html.parser')
+    
+    # Preserve structure: p → div, li → bullet
     for p in soup.find_all('p'):
         p.name = 'div'
     for li in soup.find_all('li'):
         li.name = 'div'
         li.insert(0, BeautifulSoup('• ', 'html.parser'))
     
-    text = soup.get_text().strip()
-    if not text:
-        return "Content parsing failed"
+    text = soup.get_text()
     
-    content = re.sub(r'\n+', '\n\n', text)
-    return content
+    # Perfect spacing + bullets
+    lines = [line.strip() for line in text.split('\n') if line.strip()]
+    content = '\n\n'.join(lines)
+    
+    return content[:1900]
 
 def get_image(entry):
     for media in entry.get('media_content', []):
@@ -38,22 +38,14 @@ def get_image(entry):
     return None
 
 def check_posts():
-    print("Fetching RSS...")
     feed = feedparser.parse(RSS)
-    print(f"Found {len(feed.entries)} posts")
-    
-    if not feed.entries:
-        requests.post(WEBHOOK, json={"content": "❌ No posts in r/TradingEdge RSS"})
-        return
-    
     embeds = []
-    for i, entry in enumerate(feed.entries[:3]):
-        title = entry.title[:256] or f"Post {i+1}"
-        summary = entry.get('summary', '')
-        content = clean_content(summary)
-        print(f"Post {i+1}: {len(content)} chars")
-        
+    
+    for entry in feed.entries[:3]:
+        title = entry.title[:256]
+        content = clean_content(entry.get('summary', ''))
         image = get_image(entry)
+        
         embed = {
             "title": title,
             "description": content,
@@ -66,10 +58,12 @@ def check_posts():
         
         embeds.append(embed)
     
-    data = {"embeds": embeds, "username": "🆕 TradingEdge Bot"}
-    resp = requests.post(WEBHOOK, json=data)
-    print(f"Discord response: {resp.status_code}")
-    print(f"Response: {resp.text}")
+    if embeds:
+        data = {"embeds": embeds, "username": "🆕 TradingEdge Bot"}
+        resp = requests.post(WEBHOOK, json=data)
+        print(f"✅ Posted {len(embeds)} | {resp.status_code}")
+    else:
+        print("No new posts")
 
 if __name__ == "__main__":
     check_posts()
