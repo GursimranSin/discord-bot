@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import os
 
 WEBHOOK = os.environ.get("WEBHOOK_URL")
-RSS = "https://www.reddit.com/r/TradingEdge/.rss"
+RSS = "https://www.reddit.com/r/TradingEdge/new/.rss"
 
 EST = ZoneInfo("America/New_York")
 
