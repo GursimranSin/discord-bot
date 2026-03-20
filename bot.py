@@ -107,14 +107,15 @@ def check_posts():
         response = requests.post(WEBHOOK, json={
             "content": header,
             "embeds": embeds,
-            "username": Trading Bot"
+            "username": "Trading Bot"
         })
 
-        print(f"Discord response: {response.status_code} - {response.reason}")
-        print(f"Response text: {response.text[:200]}...")  # First 200 chars
+        # Fixed: Single-line prints for GitHub Actions compatibility
+        print(f"Discord status: {response.status_code}")
+        print(f"Discord reason: {response.reason}")
+        print(f"Response preview: {response.text[:100]}")
     else:
         print("No posts in this time window")
 
 if __name__ == "__main__":
     check_posts()
-
