@@ -2,8 +2,8 @@ name: Reddit to Discord
 
 on:
   schedule:
-    - cron: "0 14 * * *"  # ~9 AM EST/EDT (14:00 UTC)
-    - cron: "0 2 * * *"   # ~9 PM EST/EDT (02:00 UTC next day)
+    - cron: '0 13 * * *'  # 9 AM EDT / 10 AM EST
+    - cron: '0 1 * * *'   # 9 PM EDT / 10 PM EST  
   workflow_dispatch:
 
 jobs:
